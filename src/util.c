@@ -1,6 +1,3 @@
-#ifndef UTIL_H
-#define UTIL_H
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -40,5 +37,3 @@ int extract_int(const char *str)
 
 	return nval;
 }
-
-#endif

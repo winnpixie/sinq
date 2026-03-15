@@ -8,22 +8,22 @@ void print_cpu_info()
 {
 	char line_buf[LINE_MAX];
 
-	FILE *cpu_info_fp = fopen("/proc/cpuinfo", "r");
-	if (cpu_info_fp == NULL)
+	FILE *cpuinfo_fp = fopen("/proc/cpuinfo", "r");
+	if (cpuinfo_fp == NULL)
 	{
 		printf("Unable to retrieve CPU information!\n");
 		return;
 	}
 	
 	int core_count = 0;
-	while (fgets(line_buf, LINE_MAX, cpu_info_fp) > 0)
+	while (fgets(line_buf, LINE_MAX, cpuinfo_fp) > 0)
 	{
 		if (index_of(line_buf, "processor") == 0)
 		{
 			core_count++;
 		}
 	}
-	fclose(cpu_info_fp);
+	fclose(cpuinfo_fp);
 
 	printf("Core Count = %d\n", core_count);
 }
@@ -31,15 +31,15 @@ void print_cpu_info()
 void print_cpu_temp()
 {
 	char line_buf[8];
-	FILE *temperature_fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-	if (temperature_fp == NULL)
+	FILE *thermal_temp_fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
+	if (thermal_temp_fp == NULL)
 	{
 		printf("Unable to retrieve Temperature information!\n");
 		return;
 	}
 
-	fgets(line_buf, 8, temperature_fp);
-	fclose(temperature_fp);
+	fgets(line_buf, 8, thermal_temp_fp);
+	fclose(thermal_temp_fp);
 
 	double core_temperature = atof(line_buf);
 	printf("Temperature = %.1f*C\n", (core_temperature / 1000.0));
@@ -51,14 +51,14 @@ void print_mem_stat()
 	int mem_avail;
 	char line_buf[LINE_MAX];
 
-	FILE *mem_info_fp = fopen("/proc/meminfo", "r");
-	if (mem_info_fp == NULL)
+	FILE *meminfo_fp = fopen("/proc/meminfo", "r");
+	if (meminfo_fp == NULL)
 	{
 		printf("Unable to retrieve Memory Information!\n");
 		return;
 	}
 
-	while (fgets(line_buf, LINE_MAX, mem_info_fp) > 0)
+	while (fgets(line_buf, LINE_MAX, meminfo_fp) > 0)
 	{
 		if (index_of(line_buf, "MemTotal") == 0)
 		{
@@ -68,7 +68,7 @@ void print_mem_stat()
 			mem_avail = extract_int(line_buf);
 		}
 	}
-	fclose(mem_info_fp);
+	fclose(meminfo_fp);
 
 	int mem_used = mem_total - mem_avail;
 	printf("Total = %dMB\n", mem_total / 1024);
