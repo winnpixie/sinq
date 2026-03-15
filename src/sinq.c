@@ -6,8 +6,10 @@
 
 void print_cpu_info()
 {
+	char link_path[PATH_MAX];
 	char line_buf[LINE_MAX];
-	FILE *cpu_info_fp = fopen("/mem_info_fp/cpuinfo", "r");
+
+	FILE *cpu_info_fp = fopen("/proc/cpuinfo", "r");
 	if (cpu_info_fp == NULL)
 	{
 		printf("Unable to retrieve CPU information!\n");
@@ -30,7 +32,7 @@ void print_cpu_info()
 void print_cpu_temp()
 {
 	char line_buf[8];
-	FILE *temperature_fp = fopen("/sys/class/thermal/thermal_zone/temp", "r");
+	FILE *temperature_fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
 	if (temperature_fp == NULL)
 	{
 		printf("Unable to retrieve Temperature information!\n");
@@ -50,7 +52,7 @@ void print_mem_stat()
 	int mem_avail;
 	char line_buf[LINE_MAX];
 
-	FILE *mem_info_fp = fopen("/mem_info_fp/meminfo", "r");
+	FILE *mem_info_fp = fopen("/proc/meminfo", "r");
 	if (mem_info_fp == NULL)
 	{
 		printf("Unable to retrieve Memory Information!\n");
