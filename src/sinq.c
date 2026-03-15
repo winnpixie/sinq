@@ -6,7 +6,6 @@
 
 void print_cpu_info()
 {
-	char link_path[PATH_MAX];
 	char line_buf[LINE_MAX];
 
 	FILE *cpu_info_fp = fopen("/proc/cpuinfo", "r");
