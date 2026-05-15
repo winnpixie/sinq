@@ -76,6 +76,22 @@ void print_mem_stat()
 	printf("In Use = %dMB (%.0f%%)\n", mem_used / 1024, ((double)mem_used / mem_total) * 100.0);
 }
 
+void print_public_addr()
+{
+	FILE *curl_proc = popen("curl -GLsS \"https://checkip.amazonaws.com/\"", "r");
+	if (curl_proc == NULL)
+	{
+		printf("Unable to launch cURL!\n");
+		return;
+	}
+
+	char ip_addr[40];
+	readline_s(curl_proc, ip_addr, 39);
+	pclose(curl_proc);
+
+	printf("Public IP Address = %s\n", ip_addr);
+}
+
 int main(int argc, char **argv)
 {
 	printf("=== sinq ===\n");
@@ -87,4 +103,8 @@ int main(int argc, char **argv)
 	// Memory
 	printf("\n--- Memory ---\n");
 	print_mem_stat();
+
+	// Network
+	printf("\n--- Network ---\n");
+	print_public_addr();
 }
