@@ -16,7 +16,7 @@ int index_of(const char *str, const char *sub)
 int extract_int(const char *str)
 {
 	int len = strlen(str);
-	char tmp[len + 1];
+	char str_tmp[len + 1];
 
 	int idx = 0;
 	for (int i = 0; i < len; i++)
@@ -24,17 +24,17 @@ int extract_int(const char *str)
 		char c = str[i];
 		if (c >= '0' && c <= '9')
 		{
-			tmp[idx++] = c;
+			str_tmp[idx++] = c;
 		}
 	}
-	tmp[idx] = '\0';
+	str_tmp[idx] = '\0';
 
-	return atoi(tmp);
+	return atoi(str_tmp);
 }
 
-int readline_s(FILE *fp, char *buf, int max)
+int read_line_s(FILE *fp, char *buf, int max_len)
 {
-	if (max == 0)
+	if (max_len == 0)
 	{
 		return -1;
 	}
@@ -61,7 +61,7 @@ int readline_s(FILE *fp, char *buf, int max)
 		}
 
 		buf[len++] = c;
-		if (max > -1 && len >= max)
+		if (max_len > -1 && len >= max_len)
 		{
 			break;
 		}
@@ -75,7 +75,7 @@ int readline_s(FILE *fp, char *buf, int max)
 	return len;
 }
 
-int readline(FILE *fp, char *buf)
+int read_line(FILE *fp, char *buf)
 {
-	return readline_s(fp, buf, -1);
+	return read_line_s(fp, buf, -1);
 }
