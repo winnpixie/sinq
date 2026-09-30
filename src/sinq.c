@@ -80,7 +80,7 @@ void print_cpu_freq()
 			} else if (freq >= 1.0)
 			{
 				printf("%.2f MHz\n", freq);
-			} else if (freq > 0.0)
+			} else
 			{
 				printf("%.0f Hz\n", freq * 1000.0);
 			}
@@ -114,7 +114,7 @@ void print_cpu_freq()
 			} else if (freq >= 1.0)
 			{
 				printf("%.2f MHz\n", freq);
-			} else if (freq > 0.0)
+			} else
 			{
 				printf("%.0f Hz\n", freq * 1000.0);
 			}
