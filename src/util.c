@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int index_of(const char *str, const char *sub)
+int str_indexof(const char *str, const char *sub)
 {
 	char *idx = strstr(str, sub);
 	if (idx == NULL)
@@ -32,7 +32,27 @@ int extract_int(const char *str)
 	return atoi(str_tmp);
 }
 
-int read_line_s(FILE *fp, char *buf, int max_len)
+double extract_fp(const char *str)
+{
+	int len = strlen(str);
+	char str_tmp[len + 1];
+
+	int idx = 0;
+	for (int i = 0; i < len; i++)
+	{
+		char c = str[i];
+		if ((c >= '0' && c <= '9')
+			|| c == '.')
+		{
+			str_tmp[idx++] = c;
+		}
+	}
+	str_tmp[idx] = '\0';
+
+	return atof(str_tmp);
+}
+
+int io_readline_s(FILE *fp, char *buf, int max_len)
 {
 	if (max_len == 0)
 	{
@@ -75,7 +95,7 @@ int read_line_s(FILE *fp, char *buf, int max_len)
 	return len;
 }
 
-int read_line(FILE *fp, char *buf)
+int io_readline(FILE *fp, char *buf)
 {
-	return read_line_s(fp, buf, -1);
+	return io_readline_s(fp, buf, -1);
 }

@@ -1,9 +1,12 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-const int index_of(const char *str, const char *sub);
+const int str_indexof(const char *str, const char *sub);
+
 const int extract_int(const char *str);
-const int read_line_s(FILE *fp, char *buf, int max_len);
-const int read_line(FILE *fp, char *buf);
+const double extract_fp(const char *str);
+
+const int io_readline_s(FILE *fp, char *buf, int max_len);
+const int io_readline(FILE *fp, char *buf);
 
 #endif

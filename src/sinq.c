@@ -1,5 +1,7 @@
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "util.h"
 
 #define LINE_MAX 128
@@ -16,9 +18,9 @@ void print_cpu_info()
 	}
 	
 	int core_count = 0;
-	while (read_line_s(fp_cpu_info, line, LINE_MAX) > -1)
+	while (io_readline_s(fp_cpu_info, line, LINE_MAX) > -1)
 	{
-		if (index_of(line, "processor") == 0)
+		if (str_indexof(line, "processor") == 0)
 		{
 			core_count++;
 		}
@@ -26,11 +28,64 @@ void print_cpu_info()
 	fclose(fp_cpu_info);
 
 	printf("Core Count = %d\n", core_count);
+
+	FILE *fp_cpu_freq = fopen("/sys/bus/cpu/devices/cpu0/cpufreq/cpuinfo_max_freq", "r");
+	if (fp_cpu_freq == NULL)
+	{
+		// try to parse frequency from lscpu
+		FILE *p_lscpu = popen("lscpu", "r");
+		if (p_lscpu == NULL)
+		{
+			printf("Unable to retrieve CPU frequency information!\n");
+			return;
+		}
+		
+		double freq = 0.0;
+		while (io_readline_s(p_lscpu, line, LINE_MAX) > -1)
+		{
+			if (strstr(line, "MHz:") != NULL)
+			{
+				double tmp = extract_fp(line);
+				freq = fmax(freq, tmp);
+			}
+		}
+		pclose(p_lscpu);
+
+		printf("Frequency(lscpu) = ");
+		if (freq > 999.0)
+		{
+			printf("%.2f GHz\n", freq / 1000.0);
+		} else if (freq >= 1.0)
+		{
+			printf("%.2f MHz\n", freq);
+		} else {
+			printf("%.0f Hz\n", freq * 1000.0);
+		}
+
+		return;
+	}
+
+	io_readline_s(fp_cpu_freq, line, LINE_MAX);
+	fclose(fp_cpu_freq);
+
+	int frequency = extract_int(line);
+	printf("Frequency(cpu0) = ");
+	if (frequency > 999999)
+	{
+		printf("%.2f GHz\n", frequency / 1000000.0);
+	} else if (frequency > 999)
+	{
+		printf("%.2f MHz\n", frequency / 1000.0);
+	} else
+	{
+		printf("%d Hz\n", frequency);
+	}
 }
 
 void print_cpu_temp()
 {
 	char line[LINE_MAX];
+
 	FILE *fp_thermals = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
 	if (fp_thermals == NULL)
 	{
@@ -38,7 +93,7 @@ void print_cpu_temp()
 		return;
 	}
 
-	read_line_s(fp_thermals, line, LINE_MAX);
+	io_readline_s(fp_thermals, line, LINE_MAX);
 	fclose(fp_thermals);
 
 	double core_temperature = atof(line);
@@ -58,12 +113,12 @@ void print_mem_stat()
 		return;
 	}
 
-	while (read_line_s(fp_mem_info, line, LINE_MAX) > -1)
+	while (io_readline_s(fp_mem_info, line, LINE_MAX) > -1)
 	{
-		if (index_of(line, "MemTotal") == 0)
+		if (str_indexof(line, "MemTotal") == 0)
 		{
 			mem_total = extract_int(line);
-		} else if (index_of(line, "MemAvailable") == 0)
+		} else if (str_indexof(line, "MemAvailable") == 0)
 		{
 			mem_avail = extract_int(line);
 		}
@@ -72,8 +127,8 @@ void print_mem_stat()
 
 	int mem_used = mem_total - mem_avail;
 	printf("Total = %dMB\n", mem_total / 1024);
-	printf("Available = %dMB (%.0f%%)\n", mem_avail / 1024, ((double)mem_avail / mem_total) * 100.0);
-	printf("In Use = %dMB (%.0f%%)\n", mem_used / 1024, ((double)mem_used / mem_total) * 100.0);
+	printf("In Use = %dMB (%.1f%%)\n", mem_used / 1024, ((double)mem_used / mem_total) * 100.0);
+	printf("Available = %dMB (%.1f%%)\n", mem_avail / 1024, ((double)mem_avail / mem_total) * 100.0);
 }
 
 void print_public_addr()
@@ -86,15 +141,54 @@ void print_public_addr()
 	}
 
 	char ip_addr[40];
-	read_line_s(p_curl, ip_addr, 39);
+	io_readline_s(p_curl, ip_addr, 39);
 	pclose(p_curl);
 
 	printf("Public IP Address = %s\n", ip_addr);
 }
 
+void print_uptime_info()
+{
+	char line[LINE_MAX];
+
+	FILE *fp_uptime = fopen("/proc/uptime", "r");
+	if (fp_uptime == NULL)
+	{
+		printf("Unable to read Uptime status!\n");
+		return;
+	}
+
+	fgets(line, LINE_MAX, fp_uptime);
+	double seconds = extract_fp(line);
+	printf("Uptime[raw] = %.2fs\n", seconds);
+
+	printf("Uptime[pretty] ");
+	if (seconds >= 86400.0)
+	{
+		// 60s * 60m * 24h
+		printf("%.1f day(s)\n", seconds / 86400.0);
+	} else if (seconds >= 3600.0)
+	{
+		// 60s * 60m
+		printf("%.1f hour(s)\n", seconds / 3600.0);
+	} else if (seconds >= 60.0)
+	{
+		// 60s
+		printf("%.1f minute(s)\n", seconds / 60.0);
+	} else {
+		// seconds
+		printf("%.2f second(s)\n", seconds);
+	}
+
+	fclose(fp_uptime);
+}
+
 int main(int argc, char *argv[])
 {
+	// Header
 	printf("=== sinq ===\n");
+	printf("\"system information querier\"\n\n");
+
 	// CPU
 	printf("--- CPU ---\n");
 	print_cpu_info();
@@ -105,6 +199,14 @@ int main(int argc, char *argv[])
 	print_mem_stat();
 
 	// Network
-	printf("\n--- Network ---\n");
-	print_public_addr();
+	if (argc > 1 && strcmp(argv[1], "-nn") == 0)
+	{
+		printf("\n--- Network ---\n");
+		print_public_addr();
+	}
+
+	printf("\n--- Misc ---\n");
+	print_uptime_info();
+
+	printf("=== END ===\n");
 }
