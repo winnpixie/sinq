@@ -1,10 +1,10 @@
-#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "util.h"
 
 #define LINE_MAX 128
+#define MAX(a, b) (a > b ? b : a)
 
 void print_cpu_info()
 {
@@ -46,7 +46,7 @@ void print_cpu_info()
 			if (strstr(line, "MHz:") != NULL)
 			{
 				double tmp = extract_fp(line);
-				freq = fmax(freq, tmp);
+				freq = MAX(freq, tmp);
 			}
 		}
 		pclose(p_lscpu);
