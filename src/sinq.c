@@ -3,8 +3,8 @@
 #include <string.h>
 #include "util.h"
 
-#define LINE_MAX 128
-#define MAX(a, b) (a > b ? b : a)
+#define LINE_MAX 256
+#define MAX(a, b) (a > b ? a : b)
 
 void print_cpu_info()
 {
@@ -28,22 +28,42 @@ void print_cpu_info()
 	fclose(fp_cpu_info);
 
 	printf("Core Count = %d\n", core_count);
+}
+
+void print_cpu_freq()
+{
+	char line[LINE_MAX];
 
 	FILE *fp_cpu_freq = fopen("/sys/bus/cpu/devices/cpu0/cpufreq/cpuinfo_max_freq", "r");
-	if (fp_cpu_freq == NULL)
+	if (fp_cpu_freq != NULL)
 	{
-		// try to parse frequency from lscpu
-		FILE *p_lscpu = popen("lscpu", "r");
-		if (p_lscpu == NULL)
+		io_readline_s(fp_cpu_freq, line, LINE_MAX);
+		fclose(fp_cpu_freq);
+
+		int frequency = extract_int(line);
+		printf("Frequency[cpu0] = ");
+		if (frequency > 999999)
 		{
-			printf("Unable to retrieve CPU frequency information!\n");
-			return;
+			printf("%.2f GHz\n", frequency / 1000000.0);
+		} else if (frequency > 999)
+		{
+			printf("%.2f MHz\n", frequency / 1000.0);
+		} else
+		{
+			printf("%d Hz\n", frequency);
 		}
-		
+
+		return;
+	}
+
+	// try to parse frequency from lscpu
+	FILE *p_lscpu = popen("lscpu", "r");
+	if (p_lscpu != NULL)
+	{	
 		double freq = 0.0;
 		while (io_readline_s(p_lscpu, line, LINE_MAX) > -1)
 		{
-			if (strstr(line, "MHz:") != NULL)
+			if (strstr(line, "max MHz:") != NULL)
 			{
 				double tmp = extract_fp(line);
 				freq = MAX(freq, tmp);
@@ -51,35 +71,60 @@ void print_cpu_info()
 		}
 		pclose(p_lscpu);
 
-		printf("Frequency(lscpu) = ");
-		if (freq > 999.0)
+		if (freq > 0.0)
 		{
-			printf("%.2f GHz\n", freq / 1000.0);
-		} else if (freq >= 1.0)
+			printf("Frequency[lscpu] = ");
+			if (freq > 999.0)
+			{
+				printf("%.2f GHz\n", freq / 1000.0);
+			} else if (freq >= 1.0)
+			{
+				printf("%.2f MHz\n", freq);
+			} else if (freq > 0.0)
+			{
+				printf("%.0f Hz\n", freq * 1000.0);
+			}
+
+			return;
+		} else
 		{
-			printf("%.2f MHz\n", freq);
-		} else {
-			printf("%.0f Hz\n", freq * 1000.0);
+			printf("%.4f", freq);
 		}
-
-		return;
 	}
 
-	io_readline_s(fp_cpu_freq, line, LINE_MAX);
-	fclose(fp_cpu_freq);
+	// try /proc/cpuinfo
+	FILE *fp_cpu_info = fopen("/proc/cpuinfo", "r");
+	if (fp_cpu_info != NULL)
+	{
+		double freq = 0.0;
+		while (io_readline_s(p_lscpu, line, LINE_MAX) > -1)
+		{
+			if (str_indexof(line, "cpu MHz") == 0)
+			{
+				double tmp = extract_fp(line);
+				freq = MAX(freq, tmp);
+			}
+		}
+		fclose(fp_cpu_info);
 
-	int frequency = extract_int(line);
-	printf("Frequency(cpu0) = ");
-	if (frequency > 999999)
-	{
-		printf("%.2f GHz\n", frequency / 1000000.0);
-	} else if (frequency > 999)
-	{
-		printf("%.2f MHz\n", frequency / 1000.0);
-	} else
-	{
-		printf("%d Hz\n", frequency);
+		if (freq > 0.0)
+		{
+			printf("Frequency[cpuinfo] = ");
+
+			if (freq > 999.0)
+			{
+				printf("%.2f GHz\n", freq / 1000.0);
+			} else if (freq >= 1.0)
+			{
+				printf("%.2f MHz\n", freq);
+			} else if (freq > 0.0)
+			{
+				printf("%.0f Hz\n", freq * 1000.0);
+			}
+		}
 	}
+
+	printf("Unable to retrieve CPU frequency information!\n");
 }
 
 void print_cpu_temp()
@@ -192,6 +237,7 @@ int main(int argc, char *argv[])
 	// CPU
 	printf("--- CPU ---\n");
 	print_cpu_info();
+	print_cpu_freq();
 	print_cpu_temp();
 	
 	// Memory
