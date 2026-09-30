@@ -56,7 +56,7 @@ void print_cpu_freq()
 		return;
 	}
 
-	// try to parse frequency from lscpu
+	// try executing lscpu
 	FILE *p_lscpu = popen("lscpu", "r");
 	if (p_lscpu != NULL)
 	{	
@@ -86,9 +86,6 @@ void print_cpu_freq()
 			}
 
 			return;
-		} else
-		{
-			printf("%.4f", freq);
 		}
 	}
 
@@ -97,7 +94,7 @@ void print_cpu_freq()
 	if (fp_cpu_info != NULL)
 	{
 		double freq = 0.0;
-		while (io_readline_s(p_lscpu, line, LINE_MAX) > -1)
+		while (io_readline_s(fp_cpu_info, line, LINE_MAX) > -1)
 		{
 			if (str_indexof(line, "cpu MHz") == 0)
 			{
